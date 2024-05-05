@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datatable Example</title>
+  <style>
+    /* Add some basic styling for the table */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <table id="datatable">
+    <thead>
+      <tr id="table-header"></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    // Credentials
+    const credentials = {
+      email: 'jimmeey@physique57india.com',
+      password: 'Jimmeey@123'
+    };
+
+    // Login URL
+    const loginUrl = 'https://api.momence.com/auth/login';
+
+    // API URL
+    const apiUrl = 'https://reports-api.momence.com/host/13752/reports/session-bookings?includeVatInRevenue=true&timeZone=Asia%2FCalcuttause&BookedEntityDateRange=false&excludeMembershipRenews=false';
+
+    // Function to login and extract session cookie
+    async function login() {
+      const response = await fetch(loginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(credentials)
+      });
+
+      const cookies = response.headers.get('Set-Cookie');
+      if (cookies) {
+        const sessionCookie = cookies.split(';')[0];
+        return sessionCookie;
+      }
+      return null;
+    }
+
+    // Function to fetch data from the API
+    async function fetchData(sessionCookie) {
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          Cookie: sessionCookie
+        }
+      });
+
+      const data = await response.json();
+      return data;
+    }
+
+    // Function to format date columns
+    function formatDateColumns(data) {
+      data.forEach(item => {
+        item.bookedAt = new Date(item.bookedAt).toLocaleDateString('en-GB');
+      });
+      return data;
+    }
+
+    // Function to map email addresses to names
+    function formatSoldByColumn(data) {
+      const mapping = {
+        'tahira@physique57mumbai.com': 'Tahira Sayyed',
+        'shipra@physique57mumbai.com': 'Shipra Bhika',
+        'priyanka@physique57mumbai.com': 'Priyanka Abnave',
+        'akshay@physique57mumbai.com': 'Akshay Rane',
+        'imran@physique57mumbai.com': 'Imran Shaikh',
+        'manisha@physique57mumbai.com': 'Manisha Rathod',
+        'zahur@physique57mumbai.com': 'Zahur Shaikh',
+        'mitali@physique57india.com': 'Mitali Kumar',
+        'jimmeey@physique57india.com': 'Jimmeey Gondaa',
+        'saachi@physique57india.com': 'Saachi Shetty',
+        'jan@themomence.com': 'Jan Momence',
+        'shanoob@physique57bengaluru.com': 'Shanoob',
+        'shifa@physique57bengaluru.com': 'Shifa Ali',
+        'santhosh@physique57bengaluru.com': 'Santhosh Kumar',
+        'hazira@physique57bengaluru.com': 'Hazira Begum',
+        'api@physique57bengaluru.com': 'Api Serou',
+        'kajol@physique57mumbai.com': 'Kajol Kanchan',
+        'N/A': 'Admin Admin'
+      };
+
+      data.forEach(item => {
+        if (item.soldBy) {
+          item.soldBy = mapping[item.soldBy];
+        }
+      });
+
+      return data;
+    }
+
+    // Function to populate the table
+    function populateTable(data) {
+      const tableHeader = document.getElementById('table-header');
+      const headers = Object.keys(data[0]);
+      const headerRow = tableHeader.insertRow();
+
+      headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        headerRow.appendChild(th);
+      });
+
+      const tbody = document.querySelector('#datatable tbody');
+      data.forEach(item => {
+        const row = tbody.insertRow();
+
+        headers.forEach(header => {
+          const td = document.createElement('td');
+          td.textContent = item[header];
+          row.appendChild(td);
+        });
+      });
+    }
+
+    (async () => {
+      const sessionCookie = await login();
+      if (sessionCookie) {
+        const data = await fetchData(sessionCookie);
+        const formattedData = formatDateColumns(data);
+        const finalData = formatSoldByColumn(formattedData);
+        populateTable(finalData);
+      } else {
+        console.error('Failed to extract session cookie.');
+      }
+    })();
+  </script>
+</body>
+</html>
